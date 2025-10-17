@@ -1,0 +1,110 @@
+PHASE PREPARE
+1.	Structure générale des données : 
+ 
+-	Les données sont correctement chargées, et ont une structure de 20 000 lignes et 18 colonnes, sans valeurs manquantes apparentes.
+-	La colonne « Date » est au format TEXTE, et les colonnes ANNEE, MOIS au format entier
+-	Les noms des colonnes ne sont pas standardisés (Mélange entre Majuscules et Minuscules)
+-	On va donc convertir les colonnes DATE, ANNEE et MOIS en Texte et standardiser les valeurs des champs : Villes, Acteurs, Catégories, Marques pour qu’il n’y ait pas d’erreur de CASSE comme (Douala - douala)
+
+2.	Vérification de la logique commerciale
+Dans cette étape, l’objectif est d'identifier les enregistrements où les montants de vente et de stock (après la conversion en format numérique) sont soit nuls soit négatifs, car ces valeurs n'ont aucun sens commercial dans un contexte de ventes (on ne peut pas vendre ou stocker une quantité négative).
+3.	Gestion de valeurs aberrantes : 
+
+-	Dans notre définition de la phase de préparation nous avons évoqué une des sources principales de biais qui constitue un risque élevé : « Le risque principal est le biais de saisie (erreurs des enquêteurs sur les stocks ou les prix) ». Cela signifie que dans notre jeu de données, un PUM (Prix Unitaire Moyen) anormalement élevé est souvent une erreur de saisie (un zéro en trop) ou une erreur de fusion de données. 
+-	Si un PUM est dix fois plus élevé que la normale, il va fausser le calcul de la PDM en valeur. Pour pallier à ce potentiel bug, on retire les outliers de Prix Unitaire Moyen dès la phase PROCESS parce que leur présence est susceptible de représenter une erreur de mesure qui fausserait tous les calculs stratégiques de PDM et d'élasticité prix que vous devez présenter à CHOCOCAM.
+-	L'alternative au retrait serait de remplacer l'outlier par une valeur estimée (comme la médiane), mais dans le cadre d'un audit où la précision est clé, le retrait est souvent privilégié pour les erreurs de mesure évidentes.
+
+4.	Test d’incohérences entre les volumes de ventes déclarés et ceux calculés
+Pour vérifier si els erreurs de saisie n’affectent pas la qualité des données
+
+PHASE ANALYZE
+1.	Analyse Univariée 
+a.	Variables quantitatives :
+
+ 
+-	Absence d'Outliers Majeurs : Visuellement, la plupart des Boxplots (notamment Volume_Acheté_KG, Volume_Vendu_KG, Vente_Finale_Calculée_KG) ne montrent pas de points isolés bien au-delà des moustaches. Ceci est cohérent avec votre test IQR qui n'avait retiré aucune ligne, confirmant la très bonne qualité des données de base.
+-	CA et Prix : Les Boxplots du Chiffre d'Affaires (Chiffre_Affaires_Achat_XAF et Chiffre_Affaires_Vente_XAF) sont les plus étirés. C'est normal : le CA a une grande dispersion, car il est le produit des volumes et des prix.
+-	Stocks : Les stocks (Stock_Initial_KG, Stock_Final_KG) sont généralement concentrés dans des plages plus petites, avec une médiane assez basse, ce qui est typique du commerce de détail.
+-	Volume Vendu vs Vente Finale : Les Boxplots de Volume_Vendu_KG et Vente_Finale_Calculée_KG sont pratiquement identiques.
+
+
+
+
+
+
+
+
+
+
+Tendances centrales (volumes vendus)
+-	Moyenne : Le volume moyen vendu par observation (point de vente, mois, marque) est de 619 KG. Point de Référence (Cible). La moyenne est très proche de la médiane, ce qui valide l'utilisation de 619 KG comme volume de transaction "typique" pour l'évaluation de la PDM par acteur.
+-	Médiane : 50% des transactions ont un volume inférieur à 613 KG, et 50% sont supérieures. Distribution Équilibrée. La médiane est presque identique à la moyenne (613 KG vs 619 KG). Confirme que le volume n'est pas faussé par des ventes extrêmement grandes ou petites. La moyenne est une mesure fiable.
+-	Mode : Le volume de transaction le plus fréquemment observé est de 509 KG.
+Tendance de dispersion
+-	Ecart type : En moyenne, les volumes de vente s'écartent de la moyenne ($619$ KG) de 241 KG. La variabilité est modérée (environ 40% de la moyenne). Cela donne une bonne fiabilité à la moyenne mais nécessite de cibler les Boxplots régionaux pour voir si cette variabilité est plus grande chez certains Acteurs. Variabilité Modérée. L'écart-type représente environ 40% de la moyenne ($240/619 \approx 0.40$). Le volume des commandes est suffisamment dispersé pour justifier une segmentation (par exemple, cibler les régions où l'écart-type est le plus faible pour maximiser la prévisibilité des volumes).
+-	Variance : Mesure la dispersion des données. (Elle est surtout utilisée comme étape intermédiaire pour le calcul d'autres statistiques, peu interprétable directement). Confirme la dispersion des volumes.
+-	Etendue : L'écart entre la plus grande vente observée ($1288$ KG) et la plus petite ($114$ KG) est de 1174 KG. Montre l'hétérogénéité des tailles de commandes entre les petits détaillants et les grands supermarchés/distributeurs. Amplitude du Marché. Mesure la différence entre la plus grande et la plus petite commande. Démontre l'hétérogénéité des besoins des détaillants (du plus petit au plus grand), justifiant la segmentation de l'analyse par Acteur et Région.
+-	Intervalle Interquartile : La moitié des ventes (50% des données) sont concentrées dans un intervalle de 381 KG autour de la médiane. C'est l'indicateur de la taille de commande la plus stable. Les transactions situées en dehors de cet intervalle sont moins typiques. Plage de Fiabilité. 50% des transactions (le cœur des données) se situent dans un intervalle de 381 KG. Les transactions en dehors de cette plage sont des exceptions. L'équipe logistique et des achats doit dimensionner la production pour supporter ce volume cœur de 381 KG.
+
+Tendances extrêmes : 
+-	Minimum : La plus petite transaction de vente enregistrée.
+-	Maximum : La plus grande transaction de vente enregistrée.
+
+b.	Variables qualitatives :
+Fréquence absolue & Fréquence relative : 
+ 
+-	Acteur : Les quatres acteurs sont couverts de manière égale (autour de 25%). Le PDM ne sera pas biaisé par la couverture d'audit.
+-	Catégorie : Les cinq catégories sont également bien représentées (autour de 20%).
+-	Géographie (Région / Ville) : Les quatre zones sont également représentées (autour de 25%), permettant une comparaison régionale solide.
+-	Marque (Top 10) : Les marques individuelles ont une présence très similaire (autour de 5%), confirmant la couverture homogène de l'audit.
+-	Échantillon Représentatif : La distribution de l'échantillon est extrêmement uniforme pour les acteurs, les catégories et la géographie (autour de 25% pour chaque modalité principale). Cela valide la méthodologie d'audit et assure une analyse de Part de Marché (PDM) non biaisée par la couverture.
+-	Taux de Rupture de Stock (TRS) : 14,70% des observations présentent une rupture de stock. Ce chiffre est un insight opérationnel majeur qui doit être analysé en corrélation avec la PDM de CHOCOCAM (Analyse Bivariée).
+-	Hétérogénéité des Marques : Bien que l'échantillon soit uniforme, la marque individuelle la plus fréquente (novella à 5,41%) est à peine plus observée que la marque la moins fréquente du top 10 (4,96%), confirmant une concurrence serrée au niveau du produit.
+
+2.	Analyse bivariée – 
+a.	Matrice de corrélation (Variables Numériques)
+ 
+-	Très Forte Corrélation : Le volume d'achat initial du détaillant est le meilleur indicateur de la vente finale. Ceci valide le rôle de la force de vente. Le succès n'est pas le fruit du hasard : il est prédéterminé par la qualité de la négociation et de la prévision de la demande par le détaillant.
+-	Le stock que le détaillant avait initialement est un facteur mineur. L'acte d'achat pendant la période (Volume_Acheté_KG) est trois fois plus important ($0.92 / 0.26 \approx 3.5$) que le stock hérité.
+-	Marché Rigide/Inélastique : La corrélation est proche de zéro. Les changements de prix n'impactent pas de manière significative la quantité vendue.
+-	Le Prix est le Moteur du Revenu : Le prix est fortement corrélé au Chiffre d'Affaires. Puisque le volume est rigide, l'augmentation du PUM se traduit directement par une augmentation du CA.
+-	Le volume contribue au CA ($r=0.62$), mais la Tarification est le facteur dominant ($r=0.74$).
+
+
+
+b.	Analyse bivariée – Test de Chi – Carré (variables qualitatives entre elles)
+
+ 
+Le seuil de significativité étant de 0.05, si la p-value est inférieure à cette valeur, on a une dépendance statique
+
+-	Acteur vs Marque : Chaque Acteur est fortement lié à un ensemble spécifique de Marques. Ceci valide la structure du marché : chaque entreprise vend des marques uniques (pas de chevauchement de marque entre concurrents).
+-	Acteur vs Région : Dépendance Géographique : La distribution des Acteurs est statistiquement différente selon la Région. Ceci justifie l'analyse régionale : Le marché n'est pas homogène, et l'Acteur X pourrait cibler fortement Bafoussam tandis que l'Acteur Y cible Douala.
+-	Acteur vs Catégorie : Indépendance : La distribution des Acteurs par Catégorie n'est pas statistiquement différente au seuil de 5%.
+-	Ville vs Région : Indépendance : Le choix de la Ville à l'intérieur de la Région n'est pas statistiquement lié.
+-	Catégorie vs Région : Indépendance : La distribution des Catégories de produits ne dépend pas de la Région (Ex: Les bonbons sont aussi populaires partout).
+-	Marque vs Régions : Dépendance Totale : Chaque Marque appartient à une seule Catégorie. (Validation de la structure des données).
+Conclusions : 
+•	Le Facteur Région est Clé : L'analyse doit obligatoirement segmenter par Région et Acteur car cette relation est statistiquement significative ($p < 0.05$). Cela valide votre focus sur la faiblesse de CHOCOCAM à Bafoussam.
+•	La Marque est l'Unité d'Analyse : La relation Acteur-Marque étant totale, toute analyse sur la PDM par Marque sera pertinente et significative.
+•	Simplification : la Ville et la Catégorie sont des variables moins puissantes que la Région dans la stratégie de PDM.
+Cette analyse démontre que le Taux de Rupture de Stock (TRS) n'est statistiquement pas lié à la façon dont le marché est segmenté.
+-	TRS est un Problème Systémique du Marché : Le TRS élevé (rappelez-vous, 14,70% des observations sont en rupture) n'est pas un problème isolé de CHOCOCAM, ni d'une seule catégorie (comme les barres de chocolat) ou d'une seule zone. Il est uniformément réparti sur l'ensemble du marché et des concurrents.
+-	Implication de l'Acteur (p=0.055) : Bien que la p-valeur soit très proche de 0.05, techniquement, le TRS de CHOCOCAM n'est pas significativement différent de celui de ses concurrents (Novia Industries, Satal, OK Foods). Cela signifie que les problèmes logistiques sont un défi structurel de l'industrie.
+-	Priorité d'Action : Tout effort d'optimisation de la chaîne d'approvisionnement (Logistique) de CHOCOCAM pour réduire ce TRS de 14,70% se traduira par un avantage concurrentiel direct et immédiat sur tous les autres acteurs, sans qu'ils puissent facilement répliquer l'avantage par un simple ajustement de prix ou de marketing.
+c.	Analyse bivariée – Test ANOVA (variables Quali vs Quanti)
+ 
+
+ 
+
+Conclusions : 
+-	Le Volume Vendu est Homogène : Il n'y a aucune différence statistiquement significative dans la taille moyenne des transactions (le volume en KG par ligne d'observation) selon l'acteur, la région, ou la marque.
+-	Implication Stratégique : Cela signifie que la différence de Part de Marché (PDM) entre CHOCOCAM et ses concurrents (que vous avez trouvée précédemment : $\approx 25\%$ chacun) n'est pas due au fait qu'un acteur vend de plus grosses commandes ou des produits plus populaires, mais uniquement due au nombre total de transactions ou à la fréquence de ses ventes.
+Les Achats sont Stables : Les consommateurs (ou les détaillants) achètent un volume stable de ces produits quelle que soit la variation du PUM dans la plage observée.
+
+
+3.	Analyse multivariée : 
+ 
+
+-	Justification de la Priorité : Le résultat de l'Interaction (F=189.3 et P<0.001) prouve que l'effet négatif de la rupture de stock est statistiquement différent et amplifié chez les détaillants à Volume_Achat_Cat "Élevé".
+
+-	Recommandation Ciblée : L'investissement logistique de CHOCOCAM ne doit pas être uniforme. Les efforts de réapprovisionnement doivent être priorisés pour les détaillants qui affichent un historique de Volume d'Achat Élevé afin de protéger le Chiffre d'Affaires là où le risque de perte est le plus grand.
