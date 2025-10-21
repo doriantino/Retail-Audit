@@ -89,7 +89,7 @@ Le problème principal est la gestion des valeurs manquantes dans les colonnes d
 L'organisation et la qualité des données (après nettoyage) sont cruciales, car elles permettent de calculer la PDM de manière fiable (un calcul basé sur la cohérence des ventes de CHOCOCAM et de l'ensemble du marché). Sans intégrité des données, toute conclusion stratégique sur l'élasticité prix ou la croissance serait invalide.
 
 
-## Phase PREPARE
+## Phase PROCESS
 
 Cette phase décrit l'utilisation des outils et les étapes de nettoyage pour garantir la qualité et la reproductibilité de l'analyse.
 
